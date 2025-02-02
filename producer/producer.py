@@ -2,7 +2,8 @@
 """
 Generates synthetic log events at a target rate (events/sec) and pushes them
 to Kafka (or, with --dry-run, prints them to stdout). Defaults to ~850/sec,
-i.e. ~51,000 events/min, matching the pipeline's "50K+ events/min" target.
+i.e. ~51,000 events/min, matching the real-time pipeline's "50K+ events/min"
+target.
 
 Usage:
     python producer.py --bootstrap-servers localhost:9092 --topic logs

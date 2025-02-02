@@ -1,12 +1,11 @@
 """
-Synthetic log event generator.
+Synthetic log event generator for a real-time log analytics pipeline.
 
 Produces realistic-looking application log events across a handful of
 microservices, including periodic "incidents" — a service that temporarily
 spikes in error rate and latency — so the Grafana dashboards built on top of
-this pipeline have something interesting to show (this is what "cut MTTD by
-60%" is built to demonstrate: the P95/error-rate panels make an incident
-visible within seconds instead of requiring someone to grep logs).
+this pipeline have something interesting to show. The goal is to make the
+streaming pipeline feel like a live production system rather than a static demo.
 """
 import random
 import socket
