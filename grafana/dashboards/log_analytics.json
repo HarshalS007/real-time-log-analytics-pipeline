@@ -1,0 +1,111 @@
+{
+  "title": "Log Analytics - Service Health",
+  "uid": "log-analytics-service-health",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "timezone": "browser",
+  "time": { "from": "now-30m", "to": "now" },
+  "refresh": "5s",
+  "tags": ["logs", "clickhouse", "kafka"],
+  "panels": [
+    {
+      "id": 1,
+      "title": "P95 Latency by Service",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "custom": { "drawStyle": "line", "fillOpacity": 10 } },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT minute AS time, service, p95_latency_ms FROM logs_db.logs_metrics_1m WHERE $__timeFilter(minute) ORDER BY minute",
+          "format": "time_series"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Error Rate % by Service",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "fieldConfig": {
+        "defaults": { "unit": "percentunit", "custom": { "drawStyle": "line", "fillOpacity": 10 } },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT minute AS time, service, error_rate FROM logs_db.logs_metrics_1m WHERE $__timeFilter(minute) ORDER BY minute",
+          "format": "time_series"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Total Requests (last 5 min)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT count() AS total FROM logs_db.logs WHERE event_time >= now() - INTERVAL 5 MINUTE",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Overall Error Rate (last 5 min)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "thresholds": { "steps": [
+        { "color": "green", "value": null },
+        { "color": "orange", "value": 0.02 },
+        { "color": "red", "value": 0.05 }
+      ] } }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT countIf(status_code >= 500) / count() AS error_rate FROM logs_db.logs WHERE event_time >= now() - INTERVAL 5 MINUTE",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Top Error Services (last 15 min)",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT service, count() AS errors, round(avg(latency_ms), 1) AS avg_latency_ms FROM logs_db.logs WHERE status_code >= 500 AND event_time >= now() - INTERVAL 15 MINUTE GROUP BY service ORDER BY errors DESC",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "End-to-End Ingestion Latency (ms)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "description": "ingested_at - event_time, per log row. Confirms the <2s Kafka-to-ClickHouse pipeline target.",
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "custom": { "drawStyle": "points" } },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT event_time AS time, latency_ms AS ingestion_latency_ms FROM logs_db.ingestion_latency ORDER BY event_time",
+          "format": "time_series"
+        }
+      ]
+    }
+  ]
+}
